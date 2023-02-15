@@ -720,38 +720,37 @@ def build_csv(k, filepath, ascending: bool = True):
 
 if __name__ == '__main__':
 
+    # -----------------run simulation template 1-----------------#
+    # uncomment following lines to run simulation
+    sim.roomName = sim.room.classroom
+    sim.baseVelocity = 3
+    sim.numHumans = 100
+    graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
+    sim.run(graph, goalLocation, rectangles, roomCoordinates)
 
-    # run build
-
-    # build_csv(2, "assets/raw_csvs/n_vs_time.csv")
-
-
-    # sim.roomName = sim.room.classroom
-    # sim.baseVelocity = 3
-    # sim.numHumans = 100
-    # graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
-    # sim.run(graph, goalLocation, rectangles, roomCoordinates)
-
+    # -----------------run simulation template 2-----------------#
+    # uncomment following lines to run simulation
     # sim.roomName = sim.room.meetingRoom
     # sim.baseVelocity = 3
     # sim.numHumans = 20
     # graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
     # sim.run(graph, goalLocation, rectangles, roomCoordinates)
 
-    sim.roomName = sim.room.jonesRoom
-    sim.baseVelocity = 3
-    sim.numHumans = 150
-    graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
-    sim.run(graph, goalLocation, rectangles, roomCoordinates)
+    # -----------------run simulation template 3-----------------#
+    # uncomment following lines to run simulation
+    # sim.roomName = sim.room.jonesRoom
+    # sim.baseVelocity = 3
+    # sim.numHumans = 150
+    # graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
+    # sim.run(graph, goalLocation, rectangles, roomCoordinates)
 
-
-
+    # -----------------run simulation template 4-----------------#
     # sim.roomName = sim.room.basic
     # sim.baseVelocity = 3
     # sim.numHumans = 90
     # graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
     # sim.run(graph, goalLocation, rectangles, roomCoordinates)
-
+    # ----------------------------------------------------------#
 
 
     print("Finished")
