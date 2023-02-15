@@ -21,18 +21,18 @@ class sim:
 
 
 
-    numHumans = 80
+    numHumans = 10
     humanRadius = .5
 
     # reccd at 5
-    baseVelocity = 2
+    baseVelocity = 5
 
     # this sets the minimum speed percentage slowdown based on having someone in front
     minSpeed = 0.001
 
 
     # this sets the slowest natural speed percentage slowdown for a person
-    minInitialSpeedCoefficient = 0.4
+    minInitialSpeedCoefficient = 0.8
 
     # reccd at 120
     coneWidth = 60
@@ -232,8 +232,7 @@ class sim:
 
 
             # create a floor
-            floor = box(pos=vector(0, 0, -1), size=vector(16, 16, 2), texture=textures.rug
-)
+            floor = box(pos=vector(0, 0, -1), size=vector(16, 16, 2), texture=textures.rug)
 
             # rectangles
             rectangles = []
@@ -298,6 +297,8 @@ class sim:
 
             goalLocation = vector(7, 7, sim.humanRadius)
             goal = box(pos=goalLocation, size=vector(1.5, 1.5, 2), color=color.green)
+
+            return
 
 
 
@@ -481,19 +482,30 @@ class sim:
 
         # create timestep and loop over 10 seconds
         dt = 0.01
-        totalTime = 100
+        totalTime = 10
+        counter = 0
 
 
+        # while people are not empty
+        while len(people) > 0:
+            # sets how many times this will run person per second
+            rate(1/dt)
+            counter += 1
 
-        for t in arange(0, totalTime, dt):
-            rate(100)
+
             # loop over all people
             for person in people:
-                # move person
                 moveX, moveY = sim.make_move(person, people)
-
                 person.pos.x += moveX*dt
                 person.pos.y += moveY*dt
+
+
+        # calculate time taken
+        timeTaken = counter * dt
+
+
+        print("Time taken: " + str(timeTaken) + " seconds")
+        return timeTaken
 
 
 
@@ -502,6 +514,12 @@ if __name__ == '__main__':
     # run build
     graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
     sim.run(graph, goalLocation, rectangles, roomCoordinates)
+
+
+
+    print("Finished")
+
+
 
 
 
