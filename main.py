@@ -21,20 +21,28 @@ class sim:
 
 
 
-    numHumans = 60
+    numHumans = 80
     humanRadius = .5
-    baseVelocity = 5
-    minSpeedCoefficient = 0.4
+
+    # reccd at 5
+    baseVelocity = 2
+
+    # this sets the minimum speed percentage slowdown based on having someone in front
+    minSpeed = 0.001
+
+
+    # this sets the slowest natural speed percentage slowdown for a person
+    minInitialSpeedCoefficient = 0.4
 
     # reccd at 120
-    coneWidth = 120
+    coneWidth = 60
 
     # reccd at 1
     coneRadius = 1
 
 
     showLabels = False
-    waitCount = 5
+    maxWaitCount = 100
 
     ## reccd at .4
     likelihoodOfWaiting = 0.4
@@ -42,6 +50,10 @@ class sim:
 
     roomName = room.classroom
 
+
+    # class vars
+    rectangles = None
+    graph = None
 
 
 
@@ -131,10 +143,10 @@ class sim:
                         # set closest person if person is within the cone radius and angle and closer than the current closest person
                         if mag(otherPersonVector) < sim.coneRadius and mag(otherPersonVector) < closestPersonDistance:
                             closestPerson = otherPerson
-                            closestPersonDistance = mag(otherPersonVector)
+                            closestPersonDistance = mag(otherPersonVector) - sim.humanRadius*2
 
                         # if moving with cause collision then set path to 0
-                        if mag(otherPersonVector)  < sim.humanRadius * 2 and mag(nextPoint-curPos) > successRadius*4:
+                        if mag(otherPersonVector) < sim.humanRadius * 2 and mag(nextPoint-curPos) > successRadius*4:
 
                             # create random variable with 80 chance of being true
                             wait = random.choice([True, False], p=[sim.likelihoodOfWaiting, 1-sim.likelihoodOfWaiting])
@@ -143,21 +155,6 @@ class sim:
                             if wait:
                                 path = vector(0, 0, 0)
                                 return 0,0
-
-
-
-
-                            # if person.waitCount < sim.waitCount:
-                            #     print("got here 1")
-                            #     person.waitCount += 1
-                            #     # person will not move this iteration
-                            #     path = vector(0, 0, 0)
-                            #     continue
-                            # else:
-                            #     print("got here 3")
-                            #     person.waitCount = -sim.waitCount*2
-                            #     continue
-                            #
 
 
 
@@ -183,9 +180,16 @@ class sim:
         if closestPerson is None:
             velocity = person.baseVelocity
         else:
-            scaledDistance = max(sim.minSpeedCoefficient, 0.5 - closestPersonDistance / sim.coneRadius)
-            velocity = person.baseVelocity * scaledDistance
+            # scaledDistance = max(sim.minSpeedCoefficient, 0.5 - closestPersonDistance / sim.coneRadius)
 
+            # scale distance to between 1 and 0 using sigmoid function
+            # scaledDistance = 1 / (1 + exp(-closestPersonDistance*10 + 5))
+            # print(closestPersonDistance)
+            if closestPersonDistance > 0:
+                velocity = sqrt(closestPersonDistance)
+
+            if closestPersonDistance <= 0:
+                velocity = sim.minSpeed
 
 
         # multiply by velocity
@@ -198,17 +202,17 @@ class sim:
 
 
 
-    def checkForCollision(person, obstacles, people):
+    def checkForCollision(x, y, obstacles, people):
         # check if person collides with any obstacle
         for obstacle in obstacles:
-            if person.pos.x + person.size.x / 2 >= obstacle.pos.x - obstacle.size.x / 2 and person.pos.x - person.size.x / 2 <= obstacle.pos.x + obstacle.size.x / 2:
-                if person.pos.y + person.size.y / 2 >= obstacle.pos.y - obstacle.size.y / 2 and person.pos.y - person.size.y / 2 <= obstacle.pos.y + obstacle.size.y / 2:
+            if x + sim.humanRadius >= obstacle.pos.x - obstacle.size.x / 2 and x - sim.humanRadius <= obstacle.pos.x + obstacle.size.x / 2:
+                if y + sim.humanRadius >= obstacle.pos.y - obstacle.size.y / 2 and y - sim.humanRadius <= obstacle.pos.y + obstacle.size.y / 2:
                     return True
 
         # check if person collides with any other person
         for otherPerson in people:
-            if person.pos.x + person.size.x / 2 >= otherPerson.pos.x - otherPerson.size.x / 2 and person.pos.x - person.size.x / 2 <= otherPerson.pos.x + otherPerson.size.x / 2:
-                if person.pos.y + person.size.y / 2 >= otherPerson.pos.y - otherPerson.size.y / 2 and person.pos.y - person.size.y / 2 <= otherPerson.pos.y + otherPerson.size.y / 2:
+            if x + sim.humanRadius >= otherPerson.pos.x - otherPerson.size.x / 2 and x - sim.humanRadius <= otherPerson.pos.x + otherPerson.size.x / 2:
+                if y + sim.humanRadius >= otherPerson.pos.y - otherPerson.size.y / 2 and y - sim.humanRadius <= otherPerson.pos.y + otherPerson.size.y / 2:
                     return True
 
         return False
@@ -443,13 +447,14 @@ class sim:
         # create graph
         graph = vg.VisGraph()
         graph.build(polys)
+        sim.graph = graph
 
         return graph, goalLocation, rectangles, roomCoordinates
 
 
     def run(graph, goalLocation, rectangles, roomCoordinates):
 
-
+        sim.rectangles = rectangles
         people = []
         for i in range(sim.numHumans):
             while (True):
@@ -461,12 +466,12 @@ class sim:
 
 
 
-                if not sim.checkForCollision(person, rectangles, people):
+                if not sim.checkForCollision(person.pos.x, person.pos.y, rectangles, people):
                     people.append(person)
                     sim.plot_path(person, person.pos, rectangles, goalLocation, graph)
 
                     # create random value between 0.3 and 1
-                    person.baseVelocity = sim.baseVelocity * random.uniform(0.3, 1)
+                    person.baseVelocity = sim.baseVelocity * random.uniform(sim.minInitialSpeedCoefficient, 1)
                     break
                 else:
                     person.visible = False
