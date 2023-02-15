@@ -16,8 +16,7 @@ def plot_path(person, pos, obstacles, goalLocation, graph: vg.VisGraph):
     # create goalLocation in vg
     goalLocation = vg.Point(goalLocation.x, goalLocation.y, goalLocation.z)
 
-    # plot shortest path with graph
-    # gives list of points to travel to
+    # graph path for current obstacle
     path = graph.shortest_path(curPos, goalLocation)
 
     # turn path into array of points with -8 z coordinate
@@ -27,31 +26,7 @@ def plot_path(person, pos, obstacles, goalLocation, graph: vg.VisGraph):
 
     # set interimGoals
     person.interimGoals = targetPoints
-
-
-
-
-    #
-    # person.path = path
-    # person.nextPoint = path[1] - path[0]
-
-    # print(person.nextPoint)
-
     return
-
-    # for i in range(len(path) - 1):
-    #     curve(pos=[path[i], path[i + 1]], color=color.green)
-
-    # get vector to next point
-    # nextPoint = path[1] - path[0]
-    # nextPoint = nextPoint / mag(nextPoint)
-
-    # return x and y values
-    # return nextPoint.x, nextPoint.y
-
-
-    # plot shortest path with vpython
-    # curve(pos=[pos, goalLocation], color=color.green)
 
 
 def make_move(person, people):
@@ -61,8 +36,15 @@ def make_move(person, people):
     # get next target in interimGoals
     nextPoint = person.interimGoals[0]
 
+    successRadius = 0.1
+
+    # special case where interim goal is the last one
+    if len(person.interimGoals) == 1:
+        successRadius = 1
+
+
     # check to see if at current point
-    if mag(curPos - nextPoint) < 0.1:
+    if mag(curPos - nextPoint) < successRadius:
 
         # remove current goal from interimGoals
         person.interimGoals.pop(0)
@@ -89,14 +71,18 @@ def make_move(person, people):
 
     # detect closest person in front of them
     closestPerson = None
-    closestPersonDistance = 100000
+    closestPersonDistance = 10000
     for otherPerson in people:
         if otherPerson != person:
             # get vector to other person
             otherPersonVector = otherPerson.pos - person.pos
 
-            # check the angle between that vector and path vector
-            angle = acos(dot(path, otherPersonVector) / (mag(path) * mag(otherPersonVector)))
+            # check to see if person is within cone radius of the path direction
+            # get angle between path and otherPersonVector
+            angle = degrees(acos(dot(path, otherPersonVector) / (mag(path) * mag(otherPersonVector))))
+
+
+
 
             # check to see if angle is less than 45 degrees
             if angle < person.coneWidth / 2:
@@ -111,20 +97,16 @@ def make_move(person, people):
     if closestPerson is None:
         velocity = person.baseVelocity
     else:
-        # make velocity proportional to square root of distance to closest person
-        velocity = min((person.baseVelocity * sqrt(closestPersonDistance)), 1)
+        scaledDistance = closestPersonDistance / person.coneRadius
+        velocity = person.baseVelocity * scaledDistance
+
+
 
     # multiply by velocity
     path = path * velocity
 
     # return x and y from path
     return path.x, path.y
-
-
-
-    # subtract curPos as vector from
-
-
 
 
 
@@ -146,10 +128,10 @@ def checkForCollision(person, obstacles, people):
 
 def run():
     # make 10 people with a sphere in put them in an array and spread them randomly in the room and on the floor
-    numHumans = 20
+    numHumans = 100
     humanRadius = 0.25
     baseVelocity = 2
-    coneWidth = 90
+    coneWidth = 45
     coneRadius = 1
 
     # make window larger
@@ -264,7 +246,7 @@ def run():
 
     # create timestep and loop over 10 seconds
     dt = 0.01
-    totalTime = 10
+    totalTime = 100
     velocity = .03
 
 
@@ -283,6 +265,7 @@ def run():
 
 if __name__ == '__main__':
     run()
+
 
 
 
