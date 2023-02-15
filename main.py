@@ -35,7 +35,7 @@ class sim:
     humanRadius = .5
 
     # reccd at 5
-    baseVelocity = 4.7
+    baseVelocity = 4
 
     # this sets the minimum speed percentage slowdown based on having someone in front
     minSpeed = 0.001
@@ -99,8 +99,8 @@ class sim:
         numHumans = 200
         humanRadius = .5
 
-        # reccd at 5
-        baseVelocity = 4.7
+        # reccd at 4
+        baseVelocity = 4
 
         # this sets the minimum speed percentage slowdown based on having someone in front
         minSpeed = 0.001
@@ -723,8 +723,32 @@ if __name__ == '__main__':
 
     # run build
 
-    build_csv(4, "assets/raw_csvs/n_vs_time.csv")
+    # build_csv(2, "assets/raw_csvs/n_vs_time.csv")
 
+
+    # sim.roomName = sim.room.classroom
+    # sim.baseVelocity = 3
+    # sim.numHumans = 100
+    # graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
+    # sim.run(graph, goalLocation, rectangles, roomCoordinates)
+
+    # sim.roomName = sim.room.meetingRoom
+    # sim.baseVelocity = 3
+    # sim.numHumans = 20
+    # graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
+    # sim.run(graph, goalLocation, rectangles, roomCoordinates)
+
+    sim.roomName = sim.room.jonesRoom
+    sim.baseVelocity = 3
+    sim.numHumans = 150
+    graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
+    sim.run(graph, goalLocation, rectangles, roomCoordinates)
+
+
+
+    # sim.roomName = sim.room.basic
+    # sim.baseVelocity = 3
+    # sim.numHumans = 90
     # graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
     # sim.run(graph, goalLocation, rectangles, roomCoordinates)
 

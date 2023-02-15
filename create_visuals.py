@@ -72,7 +72,7 @@ def built_n_time_linechart():
         ax.text(data["n"].iloc[-1], data["time"].iloc[-1], f"std: {data['std'].iloc[-1]:.2f}", bbox=dict(facecolor='white', alpha=0.5))
 
         # show on average how many data points per n
-        ax.text(data["n"].iloc[-1], data["time"].iloc[-1] - 6, f"n: {data1[data1['room'] == room]['n'].value_counts().mean():.2f}", bbox=dict(facecolor='white', alpha=0.5))
+        # ax.text(data["n"].iloc[-1], data["time"].iloc[-1] - 6, f"n: {data1[data1['room'] == room]['n'].value_counts().mean():.2f}", bbox=dict(facecolor='white', alpha=0.5))
 
 
 
@@ -102,6 +102,44 @@ def built_n_time_linechart():
 
     # write plot to file
     fig.savefig("assets/visuals/n_vs_time.png")
+
+def build_table_for_each_room():
+
+    update_master_csv()
+
+
+    data = pd.read_csv("assets/master_csv/master.csv")
+
+    # select data where room = jones
+    jones = data[data["room"] == "jonesRoom"]
+
+    # get averages for each n
+    jonesMeans = jones.groupby("n").mean().reset_index()
+
+    # select data where room = jones
+    basic = data[data["room"] == "basic"]
+
+    # get averages for each n
+    basicMeans = jones.groupby("n").mean().reset_index()
+
+    # select data where room = jones
+    classroom = data[data["room"] == "classroom"]
+
+    # get averages for each n
+    classroomMeans = classroom.groupby("n").mean().reset_index()
+    #
+    # print("jones")
+    # print(jonesMeans)
+    #
+    # print("basic")
+    # print(basicMeans)
+    #
+    # print("classroom")
+    # print(classroomMeans)
+
+    # create table
+
+
 
 if __name__ == '__main__':
     built_n_time_linechart()
