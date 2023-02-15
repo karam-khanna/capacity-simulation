@@ -17,13 +17,17 @@ class sim:
         basic = 0
         classroom = 1
         meetingRoom = 2
+        jonesRoom = 3
 
 
-    numHumans = 40
-    humanRadius = .5
-    baseVelocity = 2
-    coneWidth = 120
+    numHumans = 60
+    humanRadius = .6
+    baseVelocity = 3
+    minSpeedCoefficient = 0.4
+    coneWidth = 170
     coneRadius = 1
+    showLabels = False
+
 
     roomName = room.classroom
 
@@ -81,7 +85,7 @@ class sim:
 
                 # remove from people
                 people.remove(person)
-                return 0,0
+                return 0, 0
 
         # get next goal in interimGoals
         nextPoint = person.interimGoals[0]
@@ -119,19 +123,33 @@ class sim:
                             closestPersonDistance = mag(otherPersonVector)
 
                         # if moving with cause collision then set path to 0
-                        if mag(otherPersonVector)  < sim.humanRadius * 3 and mag(nextPoint-curPos) > successRadius*4:
+                        if mag(otherPersonVector)  < sim.humanRadius * 2 and mag(nextPoint-curPos) > successRadius*4:
+                            if person.waitCount < sim.waitCount
+                                print("got here 1")
+                                person.waitCount += 1
+                                # person will not move this iteration
+                                path = vector(0, 0, 0)
+                                continue
+                            else:
+                                person.waitCount = -sim.waitCount
+                                continue
 
-                            path = vector(0, 0, 0)
-                            continue
+
 
                     # if person is roughly orthogonal to path also don't go
                     if angle < 85 and angle > 95:
                         # check if other person is closer to goal
-                        if mag(nextPoint - otherPerson.pos) < mag(nextPoint - person.pos) and len(people) != 3:
+                        if mag(nextPoint - otherPerson.pos) < mag(nextPoint - person.pos):
+                            if person.waitCount < sim.waitCount:
+                                print("got here 2")
+                                person.waitCount += 1
+                                path = vector(0, 0, 0)
+                                continue
+                            else:
+                                person.waitCount = -sim.waitCount
 
-                            # set path to 0
-                            path = vector(0, 0, 0)
-                            continue
+
+                            # person will not move this iteration
                 except:
                     print("Math domain error")
                     continue
@@ -139,10 +157,10 @@ class sim:
 
         # if closest person is none then velocity = base velocity
         if closestPerson is None:
-            velocity = sim.baseVelocity
+            velocity = person.baseVelocity
         else:
-            scaledDistance = closestPersonDistance / sim.coneRadius
-            velocity = sim.baseVelocity * scaledDistance
+            scaledDistance = max(sim.minSpeedCoefficient, 0.5 - closestPersonDistance / sim.coneRadius)
+            velocity = person.baseVelocity * scaledDistance
 
 
 
@@ -213,31 +231,31 @@ class sim:
 
 
             label(pos=obstacle1_barrier.pos, text="Obstacle 1", xoffset=20, yoffset=20, space=20, height=10, border=4,
-                  font='sans')
+                  font='sans', visible=sim.showLabels)
 
             obstacle2_barrier = box(pos=vector(4, 5, 1), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
             obstacle2_visible = box(pos=obstacle2_barrier.pos, size=obstacle2_barrier.size * barrierDifferencePercentage,
                                     texture=textures.granite)
             label(pos=obstacle2_barrier.pos, text="Obstacle 2", xoffset=20, yoffset=20, space=20, height=10, border=4,
-                  font='sans')
+                  font='sans', visible=sim.showLabels)
 
             obstacle3_barier = box(pos=vector(5, 0, 1), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
             obstacle3_visible = box(pos=obstacle3_barier.pos, size=obstacle3_barier.size * barrierDifferencePercentage,
                                     texture=textures.granite)
             label(pos=obstacle3_barier.pos, text="Obstacle 3", xoffset=20, yoffset=20, space=20, height=10, border=4,
-                  font='sans')
+                  font='sans', visible=sim.showLabels)
 
             obstacle4_barrier = box(pos=vector(0, 5.1, 1), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
             obstacle4_visible = box(pos=obstacle4_barrier.pos, size=obstacle4_barrier.size * barrierDifferencePercentage,
                                     texture=textures.granite)
             label(pos=obstacle4_barrier.pos, text="Obstacle 4", xoffset=20, yoffset=20, space=20, height=10, border=4,
-                  font='sans')
+                  font='sans', visible=sim.showLabels)
 
             obstacle5_barrier = box(pos=vector(-5, 0, 1), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
             obstacle5_visible = box(pos=obstacle5_barrier.pos, size=obstacle5_barrier.size * barrierDifferencePercentage,
                                     texture=textures.granite)
             label(pos=obstacle5_barrier.pos, text="Obstacle 5", xoffset=20, yoffset=20, space=20, height=10, border=4,
-                  font='sans')
+                  font='sans', visible=sim.showLabels)
 
             # add all to rectangles
             rectangles.append(wallR)
@@ -272,7 +290,7 @@ class sim:
 
             table = box(pos=vector(0, 0, 0.5), size=vector(8, 3, 1), texture=textures.metal)
             table_barrier = box(pos=table.pos, size=vector(table.size.x + sim.humanRadius*4, table.size.y + sim.humanRadius*4, table.size.z), color=color.purple, opacity=0)
-            label(pos=table.pos, text="Table", xoffset=5, yoffset=5, space=10, height=5, border=4, font='sans')
+            label(pos=table.pos, text="Table", xoffset=5, yoffset=5, space=10, height=5, border=4, font='sans', visible=sim.showLabels)
 
             # append table barrier ot rectangles
             rectangles.append(table_barrier)
@@ -290,55 +308,77 @@ class sim:
 
         if sim.roomName == sim.room.classroom:
             # create four walls of the room with length 8 and width 8
-            wallR = box(pos=vector(16.25, 0, 1), size=vector(0.2, 28, 2), color=color.blue)
-            wallL = box(pos=vector(-16.25, 0, 1), size=vector(0.2, 28, 2), color=color.blue)
-            wallB = box(pos=vector(0, -14, 1), size=vector(32.5, 0.2, 2), color=color.blue)
-            wallT = box(pos=vector(0, 14, 1), size=vector(32.5, 0.2, 2), color=color.blue)
+            wallR = box(pos=vector(16.25, 0, 1), size=vector(0.2, 28, 2), texture=textures.rough)
+            wallL = box(pos=vector(-16.25, 0, 1), size=vector(0.2, 28, 2), texture=textures.rough)
+            wallB = box(pos=vector(0, -14, 1), size=vector(32.5, 0.2, 2), texture=textures.rough)
+            wallT = box(pos=vector(0, 14, 1), size=vector(32.5, 0.2, 2), texture=textures.rough)
 
-            roomCoordinates= {"xmax":16.5, "xmin":-16.5, "ymax":14, "ymin":-14}
+            roomCoordinates= {"xmax":16.5, "xmin":-16.5, "ymax":7, "ymin":-10}
 
             # create floor
-            floor = box(pos=vector(0, 0, -1), size=vector(32.5, 28, 2), color=color.blue)
+            floor = box(pos=vector(0, 0, -1), size=vector(32.5, 28, 2), texture=textures.metal)
 
-            goalLocation = vector(16.25, 9.5, 0)
-            goal = box(pos=goalLocation, size=vector(3, 3, 0.2), color=color.green)
+            goalLocation = vector(15.5, 9.5, 0)
+            goal = box(pos=vector(goalLocation.x-.5, goalLocation.y, goalLocation.z), size=vector(2, 2, 0.2), color=color.green, opacity=.5)
+
+            # add door
+            door = box(pos=vector(goalLocation.x+0.5, goalLocation.y, goalLocation.z), size=vector(0.5, 3, 5), texture=textures.wood)
 
 
             # create tables
 
             human_radius = 2
-            barrierOpacity = 0.5
+            barrierOpacity = 0
             tableTexture = textures.wood_old
 
             # Desk 1
             desk1 = box(pos=vector(0, -10, 0), size=vector(28, 1.5, 4), texture=tableTexture)
-            desk1_barrier = box(pos=vector(0, -10, 0), size=vector(28 + sim.humanRadius*4 , 1.5 + sim.humanRadius*4, 4),
+            desk1_barrier = box(pos=vector(0, -10, 0), size=vector(28 + sim.humanRadius*2 , 1.5 + sim.humanRadius*2, 4),
                                 color=color.purple, opacity=barrierOpacity)
-            label(pos=desk1.pos, text="Desk 1", xoffset=5, yoffset=5, space=10, height=10, border=4, font='sans')
+            label(pos=desk1.pos, text="Desk 1", xoffset=5, yoffset=5, space=10, height=10, border=4, font='sans', visible=sim.showLabels)
             # Desk 2
             desk2 = box(pos=vector(0, -5.5, 0), size=vector(28, 1.5, 4), texture=tableTexture)
-            desk2_barrier = box(pos=vector(0, -5.5, 0), size=vector(28 + sim.humanRadius*4, 1.5 + sim.humanRadius*4, 4),
+            desk2_barrier = box(pos=vector(0, -5.5, 0), size=vector(28 + sim.humanRadius*2, 1.5 + sim.humanRadius*2, 4),
                                 color=color.purple, opacity=barrierOpacity)
-            label(pos=desk2.pos, text="Desk 2", xoffset=5, yoffset=5, space=10, height=10, border=4, font='sans')
+            label(pos=desk2.pos, text="Desk 2", xoffset=5, yoffset=5, space=10, height=10, border=4, font='sans', visible=sim.showLabels)
             # Desk 3
             desk3 = box(pos=vector(0, -1, 0), size=vector(28, 1.5, 4), texture=tableTexture)
-            desk3_barrier = box(pos=vector(0, -1, 0), size=vector(28 + sim.humanRadius*4, 1.5 + sim.humanRadius*4, 4),
+            desk3_barrier = box(pos=vector(0, -1, 0), size=vector(28 + sim.humanRadius*2, 1.5 + sim.humanRadius*2, 4),
                                 color=color.purple, opacity=barrierOpacity)
-            label(pos=desk3.pos, text="Desk 3", xoffset=5, yoffset=5, space=10, height=10, border=4, font='sans')
+            label(pos=desk3.pos, text="Desk 3", xoffset=5, yoffset=5, space=10, height=10, border=4, font='sans', visible=sim.showLabels)
             # Desk 4
             desk4 = box(pos=vector(0, 3.5, 0), size=vector(28, 1.5, 4), texture=tableTexture)
-            desk4_barrier = box(pos=vector(0, 3.5, 0), size=vector(28 + sim.humanRadius*4, 1.5 + sim.humanRadius*4, 4),
+            desk4_barrier = box(pos=vector(0, 3.5, 0), size=vector(28 + sim.humanRadius*2, 1.5 + sim.humanRadius*2, 4),
                                 color=color.purple, opacity=barrierOpacity)
-            label(pos=desk4.pos, text="Desk 4", xoffset=5, yoffset=5, space=10, height=10, border=4, font='sans')
+            label(pos=desk4.pos, text="Desk 4", xoffset=5, yoffset=5, space=10, height=10, border=4, font='sans', visible=sim.showLabels)
             # Teachers Desk
             teachers = box(pos=vector(-11, 7, 0), size=vector(7, 2.5, 4), texture=tableTexture)
-            teachers_barrier = box(pos=vector(-11, 7, 0), size=vector(7 + sim.humanRadius*4, 2.5, 4),
+            teachers_barrier = box(pos=vector(-11, 7, 0), size=vector(7 + sim.humanRadius*2, 2.5+sim.humanRadius*2, 4),
                                    color=color.purple, opacity=barrierOpacity)
             label(pos=teachers.pos, text="Teacher's Desk", xoffset=5, yoffset=5, space=10, height=10, border=4,
-                  font='sans')
+                  font='sans', visible=sim.showLabels)
 
 
             rectangles = [desk1_barrier, desk2_barrier, desk3_barrier, desk4_barrier, teachers_barrier]
+
+
+        if sim.roomName == sim.room.jonesRoom:
+            floor = box(pos=vector(0, 0, -1), size=vector(26, 28, 2), color=color.blue)
+
+            wallR = box(pos=vector(13, 0, 1), size=vector(0.2, 28, 2), texture=textures.wood)
+            wallL = box(pos=vector(-13, 0, 1), size=vector(0.2, 28, 2), texture=textures.wood)
+            wallB = box(pos=vector(0, -14, 1), size=vector(26, 0.2, 2), texture=textures.wood)
+            wallT = box(pos=vector(0, 14, 1), size=vector(26, 0.2, 2), texture=textures.wood)
+
+            roomCoordinates= {"xmax":13, "xmin":-13, "ymax":14, "ymin":-14}
+
+
+
+            goalLocation = vector(-11, -13.5, 0)
+            goal = box(pos=goalLocation, size=vector(2, 1, 0.2), color=color.green)
+
+            rectangles = []
+
 
 
 
@@ -393,13 +433,16 @@ class sim:
 
                 # person = sphere(pos=vector(random.uniform(-7, 7), random.uniform(-7, 7), sim.humanRadius), radius=sim.humanRadius, color=color.red)
                 person = sphere(pos=vector(random.uniform(roomCoordinates["xmin"] + 2*sim.humanRadius, roomCoordinates["xmax"] - 2*sim.humanRadius), random.uniform(roomCoordinates["ymin"] + 2*sim.humanRadius, roomCoordinates["ymax"] - 2*sim.humanRadius), sim.humanRadius), radius=sim.humanRadius, color=color.red)
+                person.waitCount = 0
 
 
 
                 if not sim.checkForCollision(person, rectangles, people):
                     people.append(person)
                     sim.plot_path(person, person.pos, rectangles, goalLocation, graph)
-                    person.velocity = sim.baseVelocity
+
+                    # create random value between 0.3 and 1
+                    person.baseVelocity = sim.baseVelocity * random.uniform(0.3, 1)
                     break
                 else:
                     person.visible = False
