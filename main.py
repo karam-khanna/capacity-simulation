@@ -31,7 +31,7 @@ class sim:
 
     # ------------------#
 
-    numHumans = 200
+    numHumans = 80
     humanRadius = .5
 
     # reccd at 5
@@ -57,7 +57,7 @@ class sim:
     ## reccd at .4
     likelihoodOfWaiting = 0.4
 
-    roomName = room.jonesRoom
+    roomName = room.classroom
 
     # ------------------#
 
@@ -724,7 +724,7 @@ if __name__ == '__main__':
     # uncomment following lines to run simulation
     sim.roomName = sim.room.classroom
     sim.baseVelocity = 3
-    sim.numHumans = 100
+    sim.numHumans = 70
     graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
     sim.run(graph, goalLocation, rectangles, roomCoordinates)
 
