@@ -20,13 +20,24 @@ class sim:
         jonesRoom = 3
 
 
+
     numHumans = 60
-    humanRadius = .6
-    baseVelocity = 3
+    humanRadius = .5
+    baseVelocity = 5
     minSpeedCoefficient = 0.4
-    coneWidth = 170
+
+    # reccd at 120
+    coneWidth = 120
+
+    # reccd at 1
     coneRadius = 1
+
+
     showLabels = False
+    waitCount = 5
+
+    ## reccd at .4
+    likelihoodOfWaiting = 0.4
 
 
     roomName = room.classroom
@@ -124,33 +135,46 @@ class sim:
 
                         # if moving with cause collision then set path to 0
                         if mag(otherPersonVector)  < sim.humanRadius * 2 and mag(nextPoint-curPos) > successRadius*4:
-                            if person.waitCount < sim.waitCount
-                                print("got here 1")
-                                person.waitCount += 1
-                                # person will not move this iteration
+
+                            # create random variable with 80 chance of being true
+                            wait = random.choice([True, False], p=[sim.likelihoodOfWaiting, 1-sim.likelihoodOfWaiting])
+
+                            # if randomBool is true then wait
+                            if wait:
                                 path = vector(0, 0, 0)
-                                continue
-                            else:
-                                person.waitCount = -sim.waitCount
-                                continue
+                                return 0,0
+
+
+
+
+                            # if person.waitCount < sim.waitCount:
+                            #     print("got here 1")
+                            #     person.waitCount += 1
+                            #     # person will not move this iteration
+                            #     path = vector(0, 0, 0)
+                            #     continue
+                            # else:
+                            #     print("got here 3")
+                            #     person.waitCount = -sim.waitCount*2
+                            #     continue
+                            #
 
 
 
                     # if person is roughly orthogonal to path also don't go
-                    if angle < 85 and angle > 95:
-                        # check if other person is closer to goal
-                        if mag(nextPoint - otherPerson.pos) < mag(nextPoint - person.pos):
-                            if person.waitCount < sim.waitCount:
-                                print("got here 2")
-                                person.waitCount += 1
-                                path = vector(0, 0, 0)
-                                continue
-                            else:
-                                person.waitCount = -sim.waitCount
+                    if angle > 85 and angle < 95 and mag(otherPersonVector) < sim.coneRadius:
+                        wait = random.choice([True, False], p=[sim.likelihoodOfWaiting, 1-sim.likelihoodOfWaiting])
+
+                        # if randomBool is true then wait
+                        if wait:
+                            path = vector(0, 0, 0)
+                            return 0, 0
 
 
-                            # person will not move this iteration
-                except:
+
+
+
+                except ValueError:
                     print("Math domain error")
                     continue
 
@@ -363,7 +387,7 @@ class sim:
 
 
         if sim.roomName == sim.room.jonesRoom:
-            floor = box(pos=vector(0, 0, -1), size=vector(26, 28, 2), color=color.blue)
+            floor = box(pos=vector(0, 0, -1), size=vector(26, 28, 2), texture=textures.rug)
 
             wallR = box(pos=vector(13, 0, 1), size=vector(0.2, 28, 2), texture=textures.wood)
             wallL = box(pos=vector(-13, 0, 1), size=vector(0.2, 28, 2), texture=textures.wood)
