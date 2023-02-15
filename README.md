@@ -54,7 +54,7 @@ Access all of the below like: sim.paramName = x
  
 
 
-# method summary
+# methodology
  1. build(selectRoom)
     1. takes in:
         1. a set of 3d rooms with dimension
