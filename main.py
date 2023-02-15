@@ -633,7 +633,7 @@ def build_csv(k, filepath, ascending: bool = True):
 
 
 
-    # check if figures/n_vs_time.csv exists, if not create it
+    # check if assets/n_vs_time.csv exists, if not create it
     if not os.path.exists(filepath):
         with open(filepath, "w") as file:
             # write column for n, room name, and time taken
@@ -649,9 +649,14 @@ def build_csv(k, filepath, ascending: bool = True):
     if not ascending:
         nValues = reversed(nValues)
 
+    rooms = sim.room.rooms
+
+    # if ascending, flip rooms
+    if not ascending:
+        rooms = reversed(rooms)
 
     # loop over rooms
-    for room in sim.room.rooms:
+    for room in rooms:
         # loop over n values
         for n in nValues:
 
@@ -718,7 +723,7 @@ if __name__ == '__main__':
 
     # run build
 
-    build_csv(4, "figures/n_vs_time.csv")
+    build_csv(4, "assets/raw_csvs/n_vs_time.csv")
 
     # graph, goalLocation, rectangles, roomCoordinates = sim.build(sim)
     # sim.run(graph, goalLocation, rectangles, roomCoordinates)
