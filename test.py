@@ -1,62 +1,51 @@
-# This is a sample Python script.
-
-# Press ⇧F10 to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
 from vpython import *
-from numpy import random
+import random
 
-if __name__ == '__main__':
-    # make window larger
-    scene.width = 1200
-    scene.height = 800
+# take inputs from the user
+num_balls = int(input("Enter the number of balls: "))
+square_x = float(input("Enter the length of the square on the X axis: "))
+square_y = float(input("Enter the length of the square on the Y axis: "))
 
-    # make window grabbable
-    scene.userzoom = True
-    scene.userspin = True
+# create the square
+scene = canvas(title='Project 1 simulation', width=800, height=800)
+wall_left = box(pos=vector(-square_x/2, 0, 0), size=vector(0.1, square_y, square_y), color=color.white)
+wall_right = box(pos=vector(square_x/2, 0, 0), size=vector(0.1, square_y, square_y), color=color.white)
+wall_top = box(pos=vector(0, square_y/2, 0), size=vector(square_x, 0.1, square_y), color=color.white)
+wall_bottom = box(pos=vector(0, -square_y/2, 0), size=vector(square_x, 0.1, square_y), color=color.white)
 
+# create the door
+door = box(pos=vector(square_x/2, 0, 0), size=vector(0.1, square_y/3, square_y/3), color=color.green)
 
-    # create four walls of the room with length 8 and width 8
-    wallR = box(pos=vector(8, 0, 0), size=vector(0.2, 16, 16), color=color.blue)
-    wallL = box(pos=vector(-8, 0, 0), size=vector(0.2, 16, 16), color=color.blue)
-    wallB = box(pos=vector(0, -8, 0), size=vector(16, 0.2, 16), color=color.blue)
-    wallT = box(pos=vector(0, 8, 0), size=vector(16, 0.2, 16), color=color.blue)
-
-    # create a floor
-    floor = box(pos=vector(0, 0, -8), size=vector(16, 16, 0.2), color=color.blue)
-
-
-    # create green goal area of size 1.5 x 1.5 x 0.2 in the corner of the room
-    goalLocation = vector(7, 7, -8)
-
-    goal = box(pos=goalLocation, size=vector(1.5, 1.5, 0.2), color=color.green)
-
-    # make 10 people with a sphere in put them in an array and spread them randomly in the room and on the floor
-    numHumans = 30
-    people = []
-    for i in range(numHumans):
-        people.append(sphere(pos=vector(random.uniform(-7, 7), random.uniform(-7, 7), -8), radius=0.5, color=color.red))
-        print(people[i].pos)
+# create the balls
+balls = []
+for i in range(num_balls):
+    ball = sphere(pos=vector(random.uniform(-square_x/2, square_x/2), random.uniform(-square_y/2, square_y/2), 0), radius=0.5, color=color.red)
+    balls.append(ball)
 
 
-    # create timestep and loop over 10 seconds
-    dt = 0.01
-    totalTime = 10
-    velocity = .03
 
 
-    for t in arange(0, totalTime, dt):
+
+# define the movement of the balls
+def move_balls():
+    t = 0
+    while True:
+        # update timer
+        print(t)
+
+
+
         rate(100)
-        # loop over all people
-        for i in range(numHumans):
-            # implement simple path planning with visibility graph
+        t += 0.01
+        for ball in balls:
+            ball.pos += vector(square_x/num_balls, 0, 0) * (door.pos - ball.pos).norm() * 0.1
+            for other_ball in balls:
+                if ball != other_ball and mag(ball.pos - other_ball.pos) <= ball.radius + other_ball.radius:
+                    ball.pos -= vector(square_x/num_balls, 0, 0) * (door.pos - ball.pos).norm() * 0.1
+                    break
+            if mag(ball.pos - door.pos) <= ball.radius:
+                print("people reached the door in", t, "seconds")
+                ball.visible = False
 
-
-
-
-
-
-
-
-
-
+# start the movement of the balls
+move_balls()
