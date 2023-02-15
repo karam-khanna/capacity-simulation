@@ -6,7 +6,152 @@
 from vpython import *
 from numpy import random
 
-if __name__ == '__main__':
+import pyvisgraph as vg
+
+
+def plot_path(person, pos, obstacles, goalLocation, graph: vg.VisGraph):
+    # create curPos in vg
+    curPos = vg.Point(pos.x, pos.y)
+
+    # create goalLocation in vg
+    goalLocation = vg.Point(goalLocation.x, goalLocation.y, goalLocation.z)
+
+    # plot shortest path with graph
+    # gives list of points to travel to
+    path = graph.shortest_path(curPos, goalLocation)
+
+    # turn path into array of points with -8 z coordinate
+    targetPoints = []
+    for point in path:
+        targetPoints.append(vector(point.x, point.y, -8))
+
+    # set interimGoals
+    person.interimGoals = targetPoints
+
+
+
+
+    #
+    # person.path = path
+    # person.nextPoint = path[1] - path[0]
+
+    # print(person.nextPoint)
+
+    return
+
+    # for i in range(len(path) - 1):
+    #     curve(pos=[path[i], path[i + 1]], color=color.green)
+
+    # get vector to next point
+    # nextPoint = path[1] - path[0]
+    # nextPoint = nextPoint / mag(nextPoint)
+
+    # return x and y values
+    # return nextPoint.x, nextPoint.y
+
+
+    # plot shortest path with vpython
+    # curve(pos=[pos, goalLocation], color=color.green)
+
+
+def make_move(person, people):
+
+    curPos = person.pos
+
+    # get next target in interimGoals
+    nextPoint = person.interimGoals[0]
+
+    # check to see if at current point
+    if mag(curPos - nextPoint) < 0.1:
+
+        # remove current goal from interimGoals
+        person.interimGoals.pop(0)
+
+        # check to see if there are any more goals
+        if len(person.interimGoals) == 0:
+            person.visible = False
+
+            # remove from people
+            people.remove(person)
+            return 0,0
+
+    # get next goal in interimGoals
+    nextPoint = person.interimGoals[0]
+
+    # get vector to next point
+    path = nextPoint - vector(curPos)
+
+    # normalize vector
+    path = path / mag(path)
+
+    # multiply by velocity
+    path = path
+
+    # detect closest person in front of them
+    closestPerson = None
+    closestPersonDistance = 100000
+    for otherPerson in people:
+        if otherPerson != person:
+            # get vector to other person
+            otherPersonVector = otherPerson.pos - person.pos
+
+            # check the angle between that vector and path vector
+            angle = acos(dot(path, otherPersonVector) / (mag(path) * mag(otherPersonVector)))
+
+            # check to see if angle is less than 45 degrees
+            if angle < person.coneWidth / 2:
+                # set closest person if person is within the cone radius and angle and closer than the current closest person
+                if mag(otherPersonVector) < person.coneRadius and mag(otherPersonVector) < closestPersonDistance:
+                    closestPerson = otherPerson
+                    closestPersonDistance = mag(otherPersonVector)
+
+
+
+    # if closest person is none then velocity = base velocity
+    if closestPerson is None:
+        velocity = person.baseVelocity
+    else:
+        # make velocity proportional to square root of distance to closest person
+        velocity = min((person.baseVelocity * sqrt(closestPersonDistance)), 1)
+
+    # multiply by velocity
+    path = path * velocity
+
+    # return x and y from path
+    return path.x, path.y
+
+
+
+    # subtract curPos as vector from
+
+
+
+
+
+def checkForCollision(person, obstacles, people):
+    # check if person collides with any obstacle
+    for obstacle in obstacles:
+        if person.pos.x + person.size.x / 2 >= obstacle.pos.x - obstacle.size.x / 2 and person.pos.x - person.size.x / 2 <= obstacle.pos.x + obstacle.size.x / 2:
+            if person.pos.y + person.size.y / 2 >= obstacle.pos.y - obstacle.size.y / 2 and person.pos.y - person.size.y / 2 <= obstacle.pos.y + obstacle.size.y / 2:
+                return True
+
+    # check if person collides with any other person
+    for otherPerson in people:
+        if person.pos.x + person.size.x / 2 >= otherPerson.pos.x - otherPerson.size.x / 2 and person.pos.x - person.size.x / 2 <= otherPerson.pos.x + otherPerson.size.x / 2:
+            if person.pos.y + person.size.y / 2 >= otherPerson.pos.y - otherPerson.size.y / 2 and person.pos.y - person.size.y / 2 <= otherPerson.pos.y + otherPerson.size.y / 2:
+                return True
+
+    return False
+
+
+def run():
+    # make 10 people with a sphere in put them in an array and spread them randomly in the room and on the floor
+    numHumans = 20
+    humanRadius = 0.25
+    baseVelocity = 2
+    coneWidth = 90
+    coneRadius = 1
+
     # make window larger
     scene.width = 1200
     scene.height = 800
@@ -15,6 +160,13 @@ if __name__ == '__main__':
     scene.userzoom = True
     scene.userspin = True
 
+    # create a floor
+    floor = box(pos=vector(0, 0, -8.2), size=vector(16, 16, 0.2), color=color.blue)
+
+
+    # rectangles
+    rectangles = []
+
 
     # create four walls of the room with length 8 and width 8
     wallR = box(pos=vector(8, 0, 0), size=vector(0.2, 16, 16), color=color.blue)
@@ -22,21 +174,92 @@ if __name__ == '__main__':
     wallB = box(pos=vector(0, -8, 0), size=vector(16, 0.2, 16), color=color.blue)
     wallT = box(pos=vector(0, 8, 0), size=vector(16, 0.2, 16), color=color.blue)
 
-    # create a floor
-    floor = box(pos=vector(0, 0, -8), size=vector(16, 16, 0.2), color=color.blue)
+
+    # TODO: standardize size of boxes and make them smaller proportionally to the size of the humans
+
+    barrierDifferencePercentage = 0.65
+    barrierOpacity = 0
+
+    obstacle1_barrier = box(pos=vector(1, 2, -8), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
+    obstacle1_visible = box(pos=obstacle1_barrier.pos, size=obstacle1_barrier.size * barrierDifferencePercentage, color=color.yellow)
+    label(pos=obstacle1_barrier.pos, text="Obstacle 1", xoffset=20, yoffset=20, space=20, height=10, border=4, font='sans')
+
+    obstacle2_barrier = box(pos=vector(4, 5, -8), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
+    obstacle2_visible = box(pos=obstacle2_barrier.pos, size=obstacle2_barrier.size * barrierDifferencePercentage, color=color.yellow)
+    label(pos=obstacle2_barrier.pos, text="Obstacle 2", xoffset=20, yoffset=20, space=20, height=10, border=4, font='sans')
+
+    obstacle3_barier = box(pos=vector(5, 0, -8), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
+    obstacle3_visible = box(pos=obstacle3_barier.pos, size=obstacle3_barier.size * barrierDifferencePercentage, color=color.yellow)
+    label(pos=obstacle3_barier.pos, text="Obstacle 3", xoffset=20, yoffset=20, space=20, height=10, border=4, font='sans')
+
+    obstacle4_barrier = box(pos=vector(0, 5.1, -8), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
+    obstacle4_visible = box(pos=obstacle4_barrier.pos, size=obstacle4_barrier.size * barrierDifferencePercentage, color=color.yellow)
+    label(pos=obstacle4_barrier.pos, text="Obstacle 4", xoffset=20, yoffset=20, space=20, height=10, border=4, font='sans')
+
+    obstacle5_barrier = box(pos=vector(-5, 0, -8), size=vector(2, 2, 2), color=color.red, opacity=barrierOpacity)
+    obstacle5_visible = box(pos=obstacle5_barrier.pos, size=obstacle5_barrier.size * barrierDifferencePercentage, color=color.yellow)
+    label(pos=obstacle5_barrier.pos, text="Obstacle 5", xoffset=20, yoffset=20, space=20, height=10, border=4, font='sans')
+
+
+    # add all to rectangles
+    rectangles.append(wallR)
+    rectangles.append(wallL)
+    rectangles.append(wallB)
+    rectangles.append(wallT)
+    rectangles.append(obstacle1_barrier)
+    rectangles.append(obstacle2_barrier)
+    rectangles.append(obstacle3_barier)
+    rectangles.append(obstacle4_barrier)
+    rectangles.append(obstacle5_barrier)
+
+    polys = []
+    for obstacle in rectangles:
+        # create vg polygons
+        obstaclePolygon = [
+            # add vertices of rectangle + humanRadius to make sure people don't collide with the walls
+            vg.Point(obstacle.pos.x - obstacle.size.x / 2, obstacle.pos.y - obstacle.size.y / 2),
+            vg.Point(obstacle.pos.x + obstacle.size.x / 2, obstacle.pos.y - obstacle.size.y / 2),
+            vg.Point(obstacle.pos.x + obstacle.size.x / 2, obstacle.pos.y + obstacle.size.y / 2),
+            vg.Point(obstacle.pos.x - obstacle.size.x / 2, obstacle.pos.y + obstacle.size.y / 2)
+
+        ]
+        polys.append(obstaclePolygon)
+
+    # create graph
+    graph = vg.VisGraph()
+    graph.build(polys)
+
 
 
     # create green goal area of size 1.5 x 1.5 x 0.2 in the corner of the room
     goalLocation = vector(7, 7, -8)
-
     goal = box(pos=goalLocation, size=vector(1.5, 1.5, 0.2), color=color.green)
 
-    # make 10 people with a sphere in put them in an array and spread them randomly in the room and on the floor
-    numHumans = 40
     people = []
     for i in range(numHumans):
-        people.append(sphere(pos=vector(random.uniform(-7, 7), random.uniform(-7, 7), -8), radius=0.5, color=color.red))
-        print(people[i].pos)
+        while (True):
+            person = sphere(pos=vector(random.uniform(-7, 7), random.uniform(-7, 7), -8), radius=humanRadius, color=color.red)
+
+
+            if not checkForCollision(person, rectangles, people):
+                people.append(person)
+                plot_path(person, person.pos, rectangles, goalLocation, graph)
+                person.baseVelocity = baseVelocity
+                person.velocity = baseVelocity
+
+                # person will set their velocity based on people around them in the shape of a semi-circle in front of them
+                # set the cone radius and angle
+                person.coneRadius = coneRadius
+                person.coneWidth = coneWidth
+
+
+
+
+                break
+            else:
+                person.visible = False
+
+
 
 
     # create timestep and loop over 10 seconds
@@ -48,48 +271,18 @@ if __name__ == '__main__':
     for t in arange(0, totalTime, dt):
         rate(100)
         # loop over all people
-        for i in range(numHumans):
-            # move towards goal, without going though walls avoiding collisions or colliding with other people
-            if people[i].pos.x < goalLocation.x and people[i].pos.x < wallR.pos.x - people[i].radius:
-                # if colliding, wait for person closer to goal to move first
-                if people[i].pos.x < people[i - 1].pos.x:
-                    people[i].pos.x += velocity
-            if people[i].pos.x > goalLocation.x and people[i].pos.x > wallL.pos.x + people[i].radius:
-                # if colliding, wait for person closer to goal to move first
-                if people[i].pos.x > people[i - 1].pos.x:
-                    people[i].pos.x -= velocity
-            if people[i].pos.y < goalLocation.y and people[i].pos.y < wallT.pos.y - people[i].radius:
-                # if colliding, wait for person closer to goal to move first
-                if people[i].pos.y < people[i - 1].pos.y:
-                    people[i].pos.y += velocity
-            if people[i].pos.y > goalLocation.y and people[i].pos.y > wallB.pos.y + people[i].radius:
-                # if colliding, wait for person closer to goal to move first
-                if people[i].pos.y > people[i - 1].pos.y:
-                    people[i].pos.y -= velocity
+        for person in people:
+            # move person
+            moveX, moveY = make_move(person, people)
 
-            if people[i].pos.x > goalLocation.x - goal.size.x / 2 and people[i].pos.x < goalLocation.x + goal.size.x / 2 and \
-                    people[i].pos.y > goalLocation.y - goal.size.y / 2 and people[i].pos.y < goalLocation.y + goal.size.y / 2:
-                people[i].visible = False
-
-
-            # # move towards goal, without going though walls avoiding collisions
-            # if people[i].pos.x < goalLocation.x and people[i].pos.x < wallR.pos.x - people[i].radius:
-            #     people[i].pos.x += velocity
-            # if people[i].pos.x > goalLocation.x and people[i].pos.x > wallL.pos.x + people[i].radius:
-            #     people[i].pos.x -= velocity
-            # if people[i].pos.y < goalLocation.y and people[i].pos.y < wallT.pos.y - people[i].radius:
-            #     people[i].pos.y += velocity
-            # if people[i].pos.y > goalLocation.y and people[i].pos.y > wallB.pos.y + people[i].radius:
-            #     people[i].pos.y -= velocity
-            #
-            # # if person is in goal area, remove sphere
-            # if people[i].pos.x > goalLocation.x - goal.size.x / 2 and people[i].pos.x < goalLocation.x + goal.size.x / 2 and \
-            #         people[i].pos.y > goalLocation.y - goal.size.y / 2 and people[i].pos.y < goalLocation.y + goal.size.y / 2:
-            #     people[i].visible = False
+            person.pos.x += moveX*dt
+            person.pos.y += moveY*dt
 
 
 
 
+if __name__ == '__main__':
+    run()
 
 
 
