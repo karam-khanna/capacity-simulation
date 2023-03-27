@@ -1,9 +1,9 @@
 # capacity-simulation
+## Tips to run
+I'd recommend using PyCharm to run the below since there's a couple heavy weight(ish) packages for the 3d graphics that can be a little annoying to install directly. If you have any issues or questions please open up an issue, I'm happy to help/
 
-# file mapping
+# File by file breakdown:
 ## main.py
-
-
 - runs simulation, there's instructions at the bottom in the main function to run different templates (ie rooms + num humans)
 - to edit any parameter, you can update it via the notation used to set the room and n, like so:
   - sim.baseVelocity = x
@@ -25,7 +25,7 @@
 
 
 
-## assets folder
+## Assets folder
 - assets/master.csv
   - all data on evac time vs numHumans
   - make sure to run updateMasterCsv() in create_visuals.py before using to make sure it's updates with latest raw data from runners
@@ -36,7 +36,7 @@
   - please build all plots into this folder
   
 
-# parameters
+# Parameters
 
 Access all of the below like: sim.paramName = x
 | parameter                  | default        | description                                                                                                                                                |
@@ -54,7 +54,7 @@ Access all of the below like: sim.paramName = x
  
 
 
-# methodology
+# Methodology
  1. build(selectRoom)
     1. takes in:
         1. a set of 3d rooms with dimension
