@@ -1,6 +1,6 @@
 # Crowd Simulation
 ## Tips to run
-I'd recommend using PyCharm to run the below since there's a couple heavy weight(ish) packages for the 3d graphics that can be a little annoying to install directly. If you have any issues or questions please open up an issue, I'm happy to help!
+I'd recommend using PyCharm. If you have any issues or questions please open up an issue, I'm happy to help!
 
 # File by file breakdown:
 ## main.py
