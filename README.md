@@ -1,6 +1,6 @@
 # Crowd Simulation
 ## Summary
-This simulation allows you to model where bottlenecks might be in case of emergency evacuations. Each simulated human has its own path-planning model running which allows each human to plot their own optimal path to exit.
+This simulation allows you to model emergency evacuations inside rooms/buildings to study where spatial bottlenecks might be. Each simulated human has its own path-planning model running which allows each human to plot their own optimal path to exit.
 You can use the sample 3d rooms included here, or build your own instead. This simulation also has built-in reporting that tracks the mean exit times for each room vs the number of starting humans + outputs reporting charts / tables
 
 ## Tips to run
